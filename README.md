@@ -1,74 +1,67 @@
-# 🕷️ Playwright Crawler Helper
+# 🕷️ AI Crawler
 
-通过 Playwright 控制浏览器，记录和分析网络请求，辅助编写爬虫脚本。
+极简爬虫框架，专为 AI 代理设计。单文件、无状态、纯内存。
 
-> ⚠️ **免责声明**: 此工具仅供学习研究使用，请遵守相关法律法规和目标网站的 robots.txt 及服务条款。
+> ⚠️ 仅供学习研究，遵守 robots.txt
 
-## ✨ 功能特性
+## 🚀 3 行跑通
 
-| 功能 | 描述 |
+```python
+from ai_crawler import fetch
+result = fetch("https://example.com")
+print(result["data"]["title"])
+```
+
+## 📖 接口
+
+| 函数 | 用途 |
 |------|------|
-| 🎯 网络请求监听 | 捕获页面所有请求 |
-| 🔄 Crawlee 风格 | Context、Router、Decorator 模式 |
-| 🛡️ 反爬伪装 | 代理池、随机 UA、指纹伪装 |
-| 📊 任务队列 | 并发控制、失败重试 |
-| 💾 断点续爬 | 去重机制、状态保存 |
-| 📁 数据导出 | JSON/CSV/SQLite |
-| 📝 日志体系 | DEBUG/INFO/WARNING/ERROR |
-| ⚙️ 配置管理 | YAML 配置 |
+| `fetch(url, sel)` | 单页爬取 |
+| `crawl(urls, sel, limit)` | 批量爬取 |
+| `links(url)` | 获取链接 |
+| `json_api(url)` | JSON API |
+| `stream(urls, sel)` | 流式返回 |
 
-## 🚀 快速开始
+## 示例
 
-### 安装
+```python
+# 带选择器
+result = fetch("https://example.com", "h2")
+# {"ok": true, "data": [{"text": "..."}]}
+
+# 批量
+result = crawl(["https://a.com", "https://b.com"], "article")
+
+# 链接
+result = links("https://example.com")
+
+# JSON
+result = json_api("https://api.github.com/users/octocat")
+
+# 流式
+for item in stream(["https://a.com"], "p"):
+    print(item)
+```
+
+## 返回格式
+
+```python
+{"ok": True, "data": ..., "error": "", "code": "OK", "meta": {...}}
+{"ok": False, "data": None, "error": "...", "code": "TIMEOUT", "meta": {}}
+```
+
+## 错误码
+
+- `OK` - 成功
+- `TIMEOUT` - 超时
+- `NETWORK` - 网络错误
+- `BLOCKED` - 被拦截
+- `BAD_URL` - 无效URL
+- `TOO_BIG` - 内容过大
+- `PARSE` - 解析失败
+
+## 安装
 
 ```bash
-pip install -r requirements.txt
+pip install requests beautifulsoup4
 ```
-
-### AI 轻量接口 (推荐)
-
-```python
-from ai_crawler import crawl, fetch, get_links
-
-# 最简调用
-result = fetch("https://example.com")
-print(result["data"])
-
-# 批量爬取 + CSS 选择器
-result = crawl(["https://example.com"], ".article h2")
-
-# 获取页面链接
-links = get_links("https://example.com")
-```
-
-### Crawlee 风格 (异步)
-
-```python
-import asyncio
-from ai_crawler import BeautifulSoupCrawler
-
-crawler = BeautifulSoupCrawler(max_requests=5)
-
-@crawler.router
-async def handler(ctx):
-    ctx.push_data({
-        "url": ctx.url,
-        "title": ctx.title,
-        "headings": ctx.get_text("h2")
-    })
-    ctx.enqueue_links("a")
-
-results = asyncio.run(crawler.run(["https://example.com"]))
-```
-
-## 📚 模块说明
-
-| 模块 | 功能 |
-|------|------|
-| `ai_crawler.py` | AI 轻量爬虫接口 |
-| `crawler/` | 完整爬虫框架 |
-| `config.yaml` | 配置文件 |
-
-## ⚠️ 注意
-
-- 请遵守 robots.txt 和网站服务条款

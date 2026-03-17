@@ -1,17 +1,15 @@
 {
   "name": "playwright-crawler-helper",
-  "description": "Playwright爬虫辅助工具 - 通过分析浏览器网络请求来辅助编写爬虫脚本",
-  "version": "2.0.0",
+  "description": "AI极简爬虫 - 单文件、无状态、纯内存",
+  "version": "3.0.0",
   "author": "Claw",
   "metadata": {
     "openclaw": {
       "emoji": "🕷️",
       "requires": {
         "bins": ["python3"],
-        "anyBins": ["uv", "pip", "pip3"]
+        "anyBins": ["pip"]
       }
     }
-  },
-  "skills": [],
-  "env": {}
+  }
 }
