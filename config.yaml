@@ -1,0 +1,132 @@
+# Playwright 爬虫辅助工具配置
+
+# 浏览器配置
+browser:
+  # headless 模式（生产环境建议 True）
+  headless: false
+  
+  # 视口大小
+  viewport:
+    width: 1280
+    height: 720
+  
+  # 用户数据目录（保持登录态）
+  # user_data_dir: "./user_data"
+  
+  # 慢动作（调试用）
+  slow_mo: 0
+
+# 请求配置
+request:
+  # 默认超时（秒）
+  timeout: 30
+  
+  # 最大重试次数
+  retry:
+    max: 3
+    delay: 1
+  
+  # 请求间隔（秒），避免过快被封
+  interval: 1
+  
+  # 最大并发数
+  max_concurrency: 3
+
+# 反爬配置
+anticrawler:
+  # 随机 User-Agent
+  random_ua: true
+  
+  # User-Agent 列表
+  ua_list:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15"
+  
+  # 代理列表（支持 auth）
+  proxies:
+    # - "http://user:pass@host:port"
+    # - "socks5://user:pass@host:port"
+  
+  # 指纹伪装
+  fingerprint:
+    # 时区
+    timezone: "Asia/Shanghai"
+    # 语言
+    locale: "zh-CN"
+    # 权限
+    permissions: ["clipboard-read", "clipboard-write"]
+    # 坐标（可伪造）
+    # geolocation:
+    #   latitude: 31.2304
+    #   longitude: 121.4737
+
+# 日志配置
+logging:
+  # 日志级别: DEBUG, INFO, WARNING, ERROR
+  level: INFO
+  
+  # 日志格式
+  format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+  
+  # 日期格式
+  date_format: "%Y-%m-%d %H:%M:%S"
+  
+  # 日志文件
+  file:
+    enabled: true
+    path: "./logs/crawler.log"
+    max_bytes: 10485760  # 10MB
+    backup_count: 5
+
+# 数据输出配置
+output:
+  # 默认格式: json, csv, sqlite
+  default_format: json
+  
+  # 输出目录
+  directory: "./data"
+  
+  # JSON 配置
+  json:
+    ensure_ascii: false
+    indent: 2
+  
+  # CSV 配置
+  csv:
+    encoding: utf-8-sig
+    delimiter: ","
+  
+  # SQLite 配置
+  sqlite:
+    database: "./data/crawler.db"
+    table: "crawled_data"
+
+# 任务队列配置
+queue:
+  # 存储方式: memory, redis, sqlite
+  storage: memory
+  
+  # Redis 配置（可选）
+  redis:
+    host: "localhost"
+    port: 6379
+    db: 0
+    password: null
+  
+  # 任务重试配置
+  retry:
+    max: 3
+    delay: 5
+
+# 断点续爬配置
+checkpoint:
+  # 启用
+  enabled: true
+  
+  # 存储文件
+  file: "./data/checkpoint.json"
+  
+  # 去重字段
+  dedup_fields: ["url", "id"]
