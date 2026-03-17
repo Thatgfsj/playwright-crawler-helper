@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 测试网络请求是否可用
-支持 GET/POST 方法，可自定义 headers 和 body
+⚠️ 仅供学习研究使用
 """
 
 import argparse
@@ -87,7 +87,10 @@ def test_request(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="测试网络请求是否可用")
+    parser = argparse.ArgumentParser(
+        description="测试网络请求是否可用",
+        epilog="⚠️ 请仅用于学习研究"
+    )
     parser.add_argument("--url", required=True, help="请求的 URL")
     parser.add_argument("--method", default="GET", help="请求方法 (GET/POST)")
     parser.add_argument("--headers", help="请求头 (JSON 格式)")
