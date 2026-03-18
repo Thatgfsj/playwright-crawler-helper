@@ -65,7 +65,8 @@ export class AIEngine {
         currentMessages.push({
           role: 'assistant',
           content: response.content,
-          tool_calls: response.tool_calls
+          tool_calls: response.tool_calls,
+          reasoning_content: response.reasoning_content
         });
 
         // Execute each tool call
@@ -129,15 +130,16 @@ export class AIEngine {
       return this.mockResponse(messages);
     }
 
-    const isAnthropic = this.config.provider === 'anthropic';
+    // Use Anthropic format for Anthropic and MiniMax providers
+    const isAnthropicFormat = this.config.provider === 'anthropic' || this.config.provider === 'minimax';
     const isStreaming = false;
 
     try {
-      const requestBody = isAnthropic
+      const requestBody = isAnthropicFormat
         ? this.buildAnthropicRequest(messages)
         : this.buildOpenAIRequest(messages, isStreaming);
 
-      const headers: Record<string, string> = isAnthropic
+      const headers: Record<string, string> = isAnthropicFormat
         ? {
             'Content-Type': 'application/json',
             'x-api-key': apiKey,
@@ -161,7 +163,7 @@ export class AIEngine {
 
       const data = await response.json();
 
-      if (isAnthropic) {
+      if (isAnthropicFormat) {
         return {
           content: data.content[0]?.text || '',
           role: 'assistant',
@@ -177,7 +179,8 @@ export class AIEngine {
         content: data.choices[0]?.message?.content || '',
         role: 'assistant',
         tool_calls: data.choices[0]?.message?.tool_calls,
-        usage: data.usage
+        usage: data.usage,
+        reasoning_content: data.choices[0]?.message?.reasoning_content
       };
     } catch (error: any) {
       console.warn('API call failed, using mock response:', error.message);
@@ -198,7 +201,8 @@ export class AIEngine {
         content: m.content,
         name: m.name,
         tool_call_id: m.tool_call_id,
-        tool_calls: m.tool_calls
+        tool_calls: m.tool_calls,
+        reasoning_content: m.reasoning_content
       })),
       temperature: this.config.temperature || 0.7,
       max_tokens: this.config.maxTokens || 4096,
@@ -262,13 +266,14 @@ export class AIEngine {
       return;
     }
 
-    const isAnthropic = this.config.provider === 'anthropic';
+    // Use Anthropic format for Anthropic and MiniMax providers
+    const isAnthropicFormat = this.config.provider === 'anthropic' || this.config.provider === 'minimax';
 
-    const requestBody = isAnthropic
+    const requestBody = isAnthropicFormat
       ? this.buildAnthropicRequest(messages)
       : this.buildOpenAIRequest(messages, true);
 
-    const headers: Record<string, string> = isAnthropic
+    const headers: Record<string, string> = isAnthropicFormat
       ? {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,

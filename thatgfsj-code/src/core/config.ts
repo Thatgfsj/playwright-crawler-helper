@@ -77,11 +77,14 @@ export class ConfigManager {
       }
     }
 
+    // MODEL environment variable has highest priority
+    const model = process.env.MODEL || config.model || providerConfig.defaultModel;
+
     return {
       ...config,
       provider,
       baseUrl: config.baseUrl || providerConfig.baseUrl,
-      model: config.model || providerConfig.defaultModel,
+      model,
       apiKey: apiKey || ''
     };
   }

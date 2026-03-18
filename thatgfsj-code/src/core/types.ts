@@ -10,6 +10,7 @@ export interface ChatMessage {
   name?: string;
   tool_calls?: ToolCall[];
   tool_call_id?: string;
+  reasoning_content?: string; // For thinking models (Kimi, DeepSeek, etc.)
 }
 
 export interface ToolCall {
@@ -30,6 +31,7 @@ export interface AIResponse {
     total_tokens: number;
   };
   tool_calls?: ToolCall[];
+  reasoning_content?: string; // For thinking models (Kimi, DeepSeek, etc.)
 }
 
 export interface AIConfig {
@@ -87,7 +89,8 @@ export interface Config {
 export const PROVIDERS = {
   minimax: {
     name: 'MiniMax',
-    baseUrl: 'https://api.minimax.chat/v1',
+    // Use Anthropic-compatible API for M2.5/M2.1/M2 models
+    baseUrl: 'https://api.minimax.io/anthropic/v1',
     defaultModel: 'MiniMax-M2.5',
     envKeys: ['MINIMAX_API_KEY', 'OPENAI_API_KEY']
   },
