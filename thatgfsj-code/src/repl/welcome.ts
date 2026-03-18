@@ -9,6 +9,41 @@ import { join } from 'path';
 import { homedir } from 'os';
 
 export class WelcomeScreen {
+  
+  // SiliconFlow 推荐模型列表 (Agent 常用)
+  static readonly SILICONFLOW_MODELS = [
+    { id: 'Qwen/Qwen2.5-7B-Instruct', name: 'Qwen2.5-7B (推荐)', desc: '性价比高，适合日常编程' },
+    { id: 'Qwen/Qwen2.5-32B-Instruct', name: 'Qwen2.5-32B', desc: '更强性能，适合复杂任务' },
+    { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen2.5-72B', desc: '旗舰模型' },
+    { id: 'Pro/moonshotai/Kimi-K2.5', name: 'Kimi-K2.5 (私有)', desc: 'Moonshot 强力模型' },
+    { id: 'Pro/deepseek-ai/DeepSeek-V3', name: 'DeepSeek-V3', desc: '深度求索最新模型' },
+    { id: 'Pro/deepseek-ai/DeepSeek-R1', name: 'DeepSeek-R1', desc: '推理能力强' },
+    { id: 'THUDM/glm-4-9b-chat', name: 'GLM-4-9B', desc: '智谱模型' },
+    { id: 'THUDM/glm-4-32b-chat', name: 'GLM-4-32B', desc: '智谱大模型' },
+    { id: '01-ai/Yi-1.5-34B-Chat', name: 'Yi-1.5-34B', desc: '零一万物' },
+    { id: 'microsoft/WizardLM-2-8x22B', name: 'WizardLM-2', desc: '微软开源' },
+  ];
+
+  // MiniMax 模型
+  static readonly MINIMAX_MODELS = [
+    { id: 'MiniMax-M2.5', name: 'MiniMax-M2.5 (推荐)', desc: 'Agent 能力最强' },
+    { id: 'MiniMax-M2.1', name: 'MiniMax-M2.1', desc: '稳定版本' },
+  ];
+
+  // OpenAI 模型
+  static readonly OPENAI_MODELS = [
+    { id: 'gpt-4o-mini', name: 'GPT-4o-mini (推荐)', desc: '性价比高' },
+    { id: 'gpt-4o', name: 'GPT-4o', desc: '最新旗舰' },
+    { id: 'gpt-4-turbo', name: 'GPT-4-Turbo', desc: '强性能' },
+  ];
+
+  // Anthropic 模型
+  static readonly ANTHROPIC_MODELS = [
+    { id: 'claude-3-haiku-20240307', name: 'Claude-3-Haiku (推荐)', desc: '快速响应' },
+    { id: 'claude-3.5-sonnet-20241022', name: 'Claude-3.5-Sonnet', desc: '最新旗舰' },
+    { id: 'claude-3-opus-20240229', name: 'Claude-3-Opus', desc: '最强性能' },
+  ];
+
   /**
    * 检查是否已配置 API Key
    */
@@ -54,7 +89,6 @@ export class WelcomeScreen {
     
     const w = 62;
     
-    // 标题
     console.log(chalk.cyan('+') + chalk.white.bold(' Claude Code ') + chalk.cyan('-'.repeat(w - 14)) + '+');
     console.log(chalk.cyan('|') + chalk.yellow(' 快速开始指南').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
@@ -62,7 +96,6 @@ export class WelcomeScreen {
     console.log(chalk.cyan('|') + chalk.gray(' 运行 gfcode init 配置你的 API Key').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
     
-    // 提供商
     console.log(chalk.cyan('|') + chalk.green(' 可用提供商:').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + chalk.gray('  - SiliconFlow (推荐) - Qwen, Kimi, DeepSeek').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + chalk.gray('  - MiniMax - Moonshot Kimi 系列').padEnd(w) + chalk.cyan('|'));
@@ -70,14 +103,12 @@ export class WelcomeScreen {
     console.log(chalk.cyan('|') + chalk.gray('  - Anthropic - Claude 3.5 Sonnet').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
     
-    // 快捷命令
     console.log(chalk.cyan('|') + chalk.cyan(' 快捷命令:').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + chalk.gray('   gfcode init        - 配置 API Key').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + chalk.gray('   gfcode "问题"     - 提问').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + chalk.gray('   gfcode            - 交互模式').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
     
-    // 当前状态
     const model = process.env.MODEL || '未配置';
     const cwd = process.cwd().length > 38 ? '...' + process.cwd().slice(-35) : process.cwd();
     console.log(chalk.cyan('|') + chalk.gray(' 当前模型: ' + model).padEnd(w) + chalk.cyan('|'));
@@ -89,7 +120,7 @@ export class WelcomeScreen {
   }
 
   /**
-   * 交互式配置向导
+   * 交互式配置向导 - 带模型选择
    */
   static async interactiveSetup(): Promise<void> {
     console.clear();
@@ -103,25 +134,27 @@ export class WelcomeScreen {
       output: process.stdout
     });
 
-    console.log(chalk.cyan('|') + chalk.white(' 请选择 AI 提供商:').padEnd(w) + chalk.cyan('|'));
+    // 选择提供商
+    console.log(chalk.cyan('|') + chalk.white(' 步骤 1/3: 选择 AI 提供商').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.green(' 1. SiliconFlow (推荐)').padEnd(w) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' 2. MiniMax').padEnd(w) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' 3. OpenAI').padEnd(w) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' 4. Anthropic').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.green(' 1. SiliconFlow (推荐) - 国产模型，性价比高').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 2. MiniMax - Moonshot Kimi 系列').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 3. OpenAI - GPT-4o 系列').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 4. Anthropic - Claude 系列').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
 
     const choice = await this.question(rl, chalk.green(' 请选择 (1-4): '));
     
-    const providers: Record<string, { name: string; model: string; url: string }> = {
-      '1': { name: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct', url: 'https://siliconflow.cn' },
-      '2': { name: 'minimax', model: 'MiniMax-M2.5', url: 'https://platform.minimax.io' },
-      '3': { name: 'openai', model: 'gpt-4o-mini', url: 'https://platform.openai.com' },
-      '4': { name: 'anthropic', model: 'claude-3-haiku-20240307', url: 'https://www.anthropic.com' }
+    const providers: Record<string, { name: string; url: string; models: { id: string; name: string; desc: string }[] }> = {
+      '1': { name: 'siliconflow', url: 'https://siliconflow.cn', models: this.SILICONFLOW_MODELS },
+      '2': { name: 'minimax', url: 'https://platform.minimax.io', models: this.MINIMAX_MODELS },
+      '3': { name: 'openai', url: 'https://platform.openai.com', models: this.OPENAI_MODELS },
+      '4': { name: 'anthropic', url: 'https://www.anthropic.com', models: this.ANTHROPIC_MODELS }
     };
 
     const selected = providers[choice] || providers['1'];
     
+    // 输入 API Key
     console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + chalk.gray(' 请访问: ' + selected.url).padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + chalk.gray(' 注册账号并获取 API Key').padEnd(w) + chalk.cyan('|'));
@@ -129,11 +162,28 @@ export class WelcomeScreen {
 
     const apiKey = await this.question(rl, chalk.green(' 请输入 API Key: '));
     
+    // 选择模型
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.white(' 步骤 3/3: 选择模型').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    
+    // 显示模型列表
+    selected.models.forEach((model, idx) => {
+      const num = (idx + 1).toString().padStart(2);
+      console.log(chalk.cyan('|') + chalk.green(` ${num}. `) + chalk.gray(model.name.padEnd(25)) + chalk.gray(model.desc.padEnd(w - 34)) + chalk.cyan('|'));
+    });
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+
+    const modelChoice = await this.question(rl, chalk.green(' 请选择模型编号 (1-' + selected.models.length + '): '));
+    const modelIdx = parseInt(modelChoice) - 1;
+    const selectedModel = selected.models[modelIdx] || selected.models[0];
+    
+    // 保存配置
     console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
     console.log(chalk.cyan('|') + chalk.yellow(' 正在保存配置...').padEnd(w) + chalk.cyan('|'));
 
     const config = {
-      model: selected.model,
+      model: selectedModel.id,
       apiKey: apiKey,
       provider: selected.name,
       temperature: 0.7,
@@ -150,7 +200,11 @@ export class WelcomeScreen {
     writeFileSync(configPath, JSON.stringify(config, null, 2));
 
     console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.green(' ✓ 配置已保存! 运行 gfcode 开始使用').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.green(' ✓ 配置已保存!').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray('   提供商: ' + selected.name).padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray('   模型: ' + selectedModel.name).padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 运行 gfcode 开始使用').padEnd(w) + chalk.cyan('|'));
     console.log(chalk.cyan('+') + '-'.repeat(w) + '+');
     console.log();
     
