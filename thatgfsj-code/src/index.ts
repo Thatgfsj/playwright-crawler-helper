@@ -18,14 +18,16 @@ import chalk from 'chalk';
 import ora from 'ora';
 import readline from 'readline';
 import { fileURLToPath } from 'url';
+import { homedir } from 'os';
 import { dirname, join } from 'path';
-import { existsSync, readdirSync, statSync } from 'fs';
+import { existsSync, readdirSync, statSync, mkdirSync, writeFileSync } from 'fs';
 
 import { AIEngine } from './core/ai-engine.js';
 import { ToolRegistry } from './core/tool-registry.js';
 import { SessionManager } from './core/session.js';
 import { ConfigManager } from './core/config.js';
 import { FileTool, ShellTool, GitTool, SearchTool } from './tools/index.js';
+import { WelcomeScreen } from './repl/welcome.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -201,6 +203,50 @@ Be concise but thorough. Show your reasoning.`;
 }
 
 /**
+ * Handle model switch in interactive mode
+ */
+async function handleModelSwitch(rl: readline.Interface, currentConfig: any) {
+  console.log(chalk.cyan('\n切换模型...\n'));
+  
+  // Get available models based on current provider
+  const models = WelcomeScreen.getModelsForProvider(currentConfig.provider || 'siliconflow');
+  
+  console.log(chalk.gray('可用模型:\n'));
+  models.forEach((model, idx) => {
+    const selected = model.id === currentConfig.model ? ' ✓' : '';
+    console.log(chalk.gray(`  ${idx + 1}. ${model.name} - ${model.desc}${selected}`));
+  });
+  
+  console.log();
+  
+  const answer = await new Promise<string>((resolve) => {
+    rl.question(chalk.green('选择模型编号: '), resolve);
+  });
+  
+  const idx = parseInt(answer) - 1;
+  if (idx >= 0 && idx < models.length) {
+    const selected = models[idx];
+    
+    // Save to config
+    const config = { ...currentConfig, model: selected.id };
+    const configPath = join(homedir(), '.thatgfsj', 'config.json');
+    
+    try {
+      const dir = join(homedir(), '.thatgfsj');
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
+      writeFileSync(configPath, JSON.stringify(config, null, 2));
+      console.log(chalk.green(`\n✓ 模型已切换为: ${selected.name}\n`));
+    } catch (e: any) {
+      console.error(chalk.red(`\n保存失败: ${e.message}\n`));
+    }
+  } else {
+    console.log(chalk.yellow('\n无效选择，保持当前模型\n'));
+  }
+}
+
+/**
  * Start interactive mode (Claude Code style)
  */
 async function startInteractive() {
@@ -267,6 +313,13 @@ Be helpful, concise, and show your reasoning.`;
         
         if (trimmed === 'context') {
           console.log(chalk.cyan('\n' + getProjectContext() + '\n'));
+          ask();
+          return;
+        }
+        
+        // Model switch command
+        if (trimmed === '/model' || trimmed === 'model') {
+          await handleModelSwitch(rl, config);
           ask();
           return;
         }

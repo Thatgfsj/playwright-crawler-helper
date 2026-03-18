@@ -8,10 +8,16 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 
+export interface ModelInfo {
+  id: string;
+  name: string;
+  desc: string;
+}
+
 export class WelcomeScreen {
   
   // SiliconFlow 推荐模型列表 (Agent 常用)
-  static readonly SILICONFLOW_MODELS = [
+  static readonly SILICONFLOW_MODELS: ModelInfo[] = [
     { id: 'Qwen/Qwen2.5-7B-Instruct', name: 'Qwen2.5-7B (推荐)', desc: '性价比高，适合日常编程' },
     { id: 'Qwen/Qwen2.5-32B-Instruct', name: 'Qwen2.5-32B', desc: '更强性能，适合复杂任务' },
     { id: 'Qwen/Qwen2.5-72B-Instruct', name: 'Qwen2.5-72B', desc: '旗舰模型' },
@@ -67,6 +73,24 @@ export class WelcomeScreen {
     }
     
     return false;
+  }
+
+  /**
+   * Get models for a specific provider
+   */
+  static getModelsForProvider(provider: string): ModelInfo[] {
+    switch (provider) {
+      case 'siliconflow':
+        return this.SILICONFLOW_MODELS;
+      case 'minimax':
+        return this.MINIMAX_MODELS;
+      case 'openai':
+        return this.OPENAI_MODELS;
+      case 'anthropic':
+        return this.ANTHROPIC_MODELS;
+      default:
+        return this.SILICONFLOW_MODELS;
+    }
   }
 
   /**
