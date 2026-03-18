@@ -68,22 +68,32 @@ export class ConfigManager {
       return { ...config, provider: 'siliconflow', baseUrl: PROVIDERS.siliconflow.baseUrl };
     }
 
-    // Try to get API key from environment
+    // MODEL environment variable has highest priority
+    let model = process.env.MODEL || config.model || providerConfig.defaultModel;
+    
+    // Handle Ollama (local, no API key needed)
     let apiKey = config.apiKey;
-    for (const envKey of providerConfig.envKeys) {
-      if (process.env[envKey]) {
-        apiKey = process.env[envKey];
-        break;
+    let baseUrl = config.baseUrl || providerConfig.baseUrl;
+    
+    if (provider === 'ollama') {
+      // Ollama doesn't need an API key
+      apiKey = '';
+      // Allow custom base URL via environment
+      baseUrl = process.env.OLLAMA_BASE_URL || baseUrl;
+    } else {
+      // Try to get API key from environment
+      for (const envKey of providerConfig.envKeys) {
+        if (process.env[envKey]) {
+          apiKey = process.env[envKey];
+          break;
+        }
       }
     }
-
-    // MODEL environment variable has highest priority
-    const model = process.env.MODEL || config.model || providerConfig.defaultModel;
 
     return {
       ...config,
       provider,
-      baseUrl: config.baseUrl || providerConfig.baseUrl,
+      baseUrl,
       model,
       apiKey: apiKey || ''
     };

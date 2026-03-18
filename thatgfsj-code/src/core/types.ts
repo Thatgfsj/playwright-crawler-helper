@@ -40,7 +40,7 @@ export interface AIConfig {
   temperature?: number;
   maxTokens?: number;
   baseUrl?: string;
-  provider?: 'minimax' | 'openai' | 'siliconflow' | 'anthropic' | 'custom';
+  provider?: 'minimax' | 'openai' | 'siliconflow' | 'anthropic' | 'ollama' | 'custom';
 }
 
 export interface Tool {
@@ -81,7 +81,7 @@ export interface Config {
   apiKey: string;
   temperature: number;
   maxTokens: number;
-  provider?: AIConfig['provider'];
+  provider?: 'minimax' | 'openai' | 'siliconflow' | 'anthropic' | 'ollama' | 'custom';
   baseUrl?: string;
 }
 
@@ -111,5 +111,11 @@ export const PROVIDERS = {
     baseUrl: 'https://api.anthropic.com/v1',
     defaultModel: 'claude-3-haiku-20240307',
     envKeys: ['ANTHROPIC_API_KEY']
+  },
+  ollama: {
+    name: 'Ollama (Local)',
+    baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+    defaultModel: 'llama2',
+    envKeys: []
   }
 } as const;

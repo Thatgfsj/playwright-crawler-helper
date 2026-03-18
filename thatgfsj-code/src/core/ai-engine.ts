@@ -3,6 +3,7 @@
  * Supports multiple providers: MiniMax, SiliconFlow, OpenAI, Anthropic
  */
 
+import chalk from 'chalk';
 import { ChatMessage, AIResponse, AIConfig, Tool, ToolCall } from './types.js';
 
 export class AIEngine {
@@ -110,7 +111,18 @@ export class AIEngine {
 
     try {
       const params = JSON.parse(args);
-      const result = await tool.execute(params);
+      
+      // Create context with confirm callback
+      const ctx = {
+        confirmAction: async (msg: string): Promise<boolean> => {
+          // In CLI mode, we need to prompt user for confirmation
+          // For now, we'll auto-deny dangerous commands and auto-allow safe ones
+          console.log(chalk.yellow(`\n⚠️  Tool wants to execute: ${msg}`));
+          return false; // Default deny - user must confirm
+        }
+      };
+      
+      const result = await tool.execute(params, ctx);
       return {
         output: result.success ? (result.output || JSON.stringify(result.data)) : undefined,
         error: result.error

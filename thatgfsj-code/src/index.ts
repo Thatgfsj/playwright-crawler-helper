@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Thatgfsj Code - AI Coding Assistant CLI
- * Entry point with global error handling
+ * Thatgfsj Code - AI Coding Assistant
+ * Claude Code-like interactive CLI
  */
 
 import { program } from 'commander';
@@ -11,14 +11,13 @@ import ora from 'ora';
 import readline from 'readline';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, readdirSync, statSync } from 'fs';
 
 import { AIEngine } from './core/ai-engine.js';
 import { ToolRegistry } from './core/tool-registry.js';
 import { SessionManager } from './core/session.js';
 import { ConfigManager } from './core/config.js';
-import { FileTool } from './tools/file.js';
-import { ShellTool } from './tools/shell.js';
+import { FileTool, ShellTool, GitTool, SearchTool } from './tools/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -26,126 +25,181 @@ const __dirname = dirname(__filename);
 // ============== Global Error Handling ==============
 
 process.on('uncaughtException', (error) => {
-  console.error(chalk.red('\n❌ Uncaught Error:'), error.message);
-  console.error(chalk.gray(error.stack || ''));
+  console.error(chalk.red('\n❌ Error:'), error.message);
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error(chalk.red('\n❌ Unhandled Rejection:'), reason);
+process.on('unhandledRejection', (reason) => {
+  console.error(chalk.red('\n❌ Error:'), reason);
   process.exit(1);
 });
 
 // ============== CLI Program ==============
 
 program
-  .name('thatgfsj')
-  .description('🤖 Thatgfsj Code - Your AI Coding Assistant')
-  .version('0.1.0');
-
-// Chat command
-program
-  .command('chat')
-  .description('Start interactive chat mode')
-  .option('-s, --system <prompt>', 'System prompt')
-  .option('-m, --model <model>', 'Specify model')
-  .option('--no-stream', 'Disable streaming')
-  .action(async (options) => {
-    await startChat(options.system, options.model, options.stream);
-  });
-
-// Exec command
-program
-  .command('exec <prompt>')
-  .description('Execute a single prompt')
+  .name('gfcode')
+  .description('🤖 AI Coding Assistant - Like Claude Code')
+  .version('0.2.0')
+  .argument('[prompt]', 'Task to execute (omit to start interactive mode)')
+  .option('-i, --interactive', 'Start interactive mode')
   .option('-s, --stream', 'Stream output')
   .option('-m, --model <model>', 'Specify model')
+  .option('--no-auto', 'Disable auto-read project files')
   .action(async (prompt, options) => {
-    await executePrompt(prompt, options.stream, options.model);
+    // Default to interactive mode if no prompt provided
+    if (!prompt && !options.interactive) {
+      await startInteractive();
+    } else if (prompt) {
+      await executeTask(prompt, options);
+    } else {
+      await startInteractive();
+    }
   });
 
-// Init command
-program
-  .command('init')
-  .description('Initialize Thatgfsj Code configuration')
-  .option('-p, --provider <provider>', 'AI provider', 'siliconflow')
-  .action(async (options) => {
-    await initialize(options.provider);
-  });
-
-// Config command
-program
-  .command('config')
-  .description('Show/manage configuration')
-  .option('-s, --set <key=value>', 'Set config value')
-  .option('-p, --provider <provider>', 'Switch provider')
-  .action(async (options) => {
-    await showConfig(options);
-  });
-
-// Tools command
-program
-  .command('tools')
-  .description('List available tools')
-  .action(() => {
-    listTools();
-  });
-
-// Providers command
-program
-  .command('providers')
-  .description('List available AI providers')
-  .action(() => {
-    showProviders();
-  });
-
-// Default: show help
+// Parse
 program.parse(process.argv);
-
-if (process.argv.length === 2) {
-  console.log(chalk.cyan('🤖 Thatgfsj Code v0.1.0'));
-  console.log(chalk.gray('  Your AI Coding Assistant\n'));
-  console.log(chalk.gray('Usage:'));
-  console.log(chalk.gray('  thatgfsj chat          Start interactive mode'));
-  console.log(chalk.gray('  thatgjs exec <prompt>  Execute a single prompt'));
-  console.log(chalk.gray('  thatgfsj init          Initialize config'));
-  console.log(chalk.gray('  thatgfsj config        Show configuration'));
-  console.log(chalk.gray('  thatgfsj tools         List tools'));
-  console.log(chalk.gray('  thatgfsj providers     List AI providers'));
-  console.log(chalk.gray('\nType "thatgfsj --help" for more info'));
-}
 
 // ============== Core Functions ==============
 
 /**
- * Start interactive chat mode
+ * Get project context
  */
-async function startChat(systemPrompt?: string, model?: string, stream: boolean = true) {
-  console.log(chalk.cyan('\n🤖 Thatgfsj Code - Interactive Mode\n'));
-  console.log(chalk.gray('Commands: "exit" to quit, "clear" to clear history, "tools" to list tools\n'));
+function getProjectContext(): string {
+  const cwd = process.cwd();
+  const info: string[] = [];
+  
+  try {
+    // Package info
+    const pkgPath = join(cwd, 'package.json');
+    if (existsSync(pkgPath)) {
+      info.push(`📦 Project: ${cwd}`);
+      const { readFileSync } = require('fs');
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+      info.push(`   Name: ${pkg.name || 'unknown'}`);
+      if (pkg.dependencies && Object.keys(pkg.dependencies).length > 0) {
+        info.push(`   Deps: ${Object.keys(pkg.dependencies).length} packages`);
+      }
+    } else {
+      info.push(`📁 Working dir: ${cwd}`);
+    }
+    
+    // Count files
+    let fileCount = 0;
+    const countFiles = (dir: string) => {
+      try {
+        const items = readdirSync(dir);
+        for (const item of items) {
+          if (item === 'node_modules' || item === '.git') continue;
+          const fullPath = join(dir, item);
+          const stat = statSync(fullPath);
+          if (stat.isDirectory()) {
+            countFiles(fullPath);
+          } else if (/\.(ts|js|py|go|rs|java|cpp|c|h)$/.test(item)) {
+            fileCount++;
+          }
+        }
+      } catch {}
+    };
+    countFiles(cwd);
+    if (fileCount > 0) {
+      info.push(`   Files: ${fileCount} code files`);
+    }
+  } catch {}
+  
+  return info.join('\n');
+}
 
+/**
+ * Execute a task (Claude Code style)
+ */
+async function executeTask(prompt: string, options: any) {
+  console.log(chalk.cyan('\n🤖 Thatgfsj Code\n'));
+  console.log(chalk.gray(getProjectContext()));
+  console.log(chalk.gray('─'.repeat(40)));
+  console.log(chalk.cyan('\n> ') + prompt + '\n');
+  
   try {
     const config = await ConfigManager.load();
-    if (model) config.model = model;
+    if (options.model) config.model = options.model;
     
     const ai = new AIEngine(config);
     const session = new SessionManager();
     const registry = new ToolRegistry();
     
-    // Register tools
+    // Register tools - all available tools
     const shellTool = new ShellTool();
     const fileTool = new FileTool();
+    const gitTool = new GitTool();
+    const searchTool = new SearchTool();
+    
     ai.registerTool(shellTool);
     ai.registerTool(fileTool);
+    ai.registerTool(gitTool);
+    ai.registerTool(searchTool);
     
-    // Setup confirmation callback
-    registry.setContext({
-      confirmAction: (msg: string) => askConfirmation(msg)
-    });
+    // System prompt - Claude Code style
+    const systemPrompt = `You are Thatgfsj Code, an AI coding assistant like Claude Code.
+You can read files, write files, and execute shell commands to complete coding tasks.
 
-    // Add system prompt
-    const defaultSystem = 'You are Thatgfsj Code, a helpful AI coding assistant. You can execute shell commands and file operations when needed.';
-    session.addMessage('system', systemPrompt || defaultSystem);
+When working on a task:
+1. First understand what files are involved
+2. Read necessary files to understand the codebase  
+3. Make changes
+4. Verify the changes work
+
+Be concise but thorough. Show your reasoning.`;
+    
+    session.addMessage('system', systemPrompt);
+    session.addMessage('user', prompt);
+    
+    const spinner = ora(chalk.gray('Thinking...')).start();
+    const response = await ai.chat(session.getMessages());
+    spinner.stop();
+    
+    console.log(chalk.cyan('\n🤖 Response:\n'));
+    console.log(response.content);
+    console.log(chalk.gray('\n' + '─'.repeat(40)));
+    
+  } catch (error: any) {
+    console.error(chalk.red(`\n❌ Error: ${error.message}`));
+    process.exit(1);
+  }
+}
+
+/**
+ * Start interactive mode (Claude Code style)
+ */
+async function startInteractive() {
+  console.log(chalk.cyan('\n🤖 Thatgfsj Code - Interactive Mode\n'));
+  console.log(chalk.gray(getProjectContext()));
+  console.log(chalk.gray('─'.repeat(40)));
+  console.log(chalk.gray('\nCommands:'));
+  console.log(chalk.gray('  exit, Ctrl+C   - Quit'));
+  console.log(chalk.gray('  clear          - Clear history'));
+  console.log(chalk.gray('  context        - Show project context'));
+  console.log(chalk.gray('\n' + '─'.repeat(40) + '\n'));
+  
+  try {
+    const config = await ConfigManager.load();
+    const ai = new AIEngine(config);
+    const session = new SessionManager();
+    
+    // Register tools - all available tools
+    const shellTool = new ShellTool();
+    const fileTool = new FileTool();
+    const gitTool = new GitTool();
+    const searchTool = new SearchTool();
+    
+    ai.registerTool(shellTool);
+    ai.registerTool(fileTool);
+    ai.registerTool(gitTool);
+    ai.registerTool(searchTool);
+    
+    // System prompt
+    const defaultSystem = `You are Thatgfsj Code, an AI coding assistant like Claude Code.
+You can read files, write files, and execute shell commands.
+Be helpful, concise, and show your reasoning.`;
+    session.addMessage('system', defaultSystem);
 
     const rl = readline.createInterface({
       input: process.stdin,
@@ -153,12 +207,17 @@ async function startChat(systemPrompt?: string, model?: string, stream: boolean 
       terminal: true
     });
 
-    const prompt = () => {
+    const ask = () => {
       rl.question(chalk.green('\n> '), async (input) => {
         const trimmed = input.trim();
         
-        // Handle special commands
-        if (trimmed === 'exit' || trimmed === 'quit') {
+        if (!trimmed) {
+          ask();
+          return;
+        }
+        
+        // Commands
+        if (trimmed === 'exit' || trimmed === 'quit' || trimmed === '\\x03') {
           console.log(chalk.gray('\n👋 Goodbye!'));
           rl.close();
           return;
@@ -166,194 +225,45 @@ async function startChat(systemPrompt?: string, model?: string, stream: boolean 
         
         if (trimmed === 'clear') {
           session.clear();
-          console.log(chalk.gray('History cleared.'));
-          prompt();
-          return;
-        }
-
-        if (trimmed === 'tools') {
-          console.log(chalk.cyan('\n📦 Available Tools:'));
-          for (const t of registry.listAll()) {
-            console.log(chalk.gray(`  • ${t.name}: ${t.description}`));
-          }
-          prompt();
+          console.clear();
+          console.log(chalk.cyan('🤖 Thatgfsj Code - Interactive Mode\n'));
+          ask();
           return;
         }
         
-        if (!trimmed) {
-          prompt();
+        if (trimmed === 'context') {
+          console.log(chalk.cyan('\n' + getProjectContext() + '\n'));
+          ask();
           return;
         }
 
-        // Add user message
+        // Add and process
         session.addMessage('user', trimmed);
-
-        // Show thinking indicator
+        
         const spinner = ora(chalk.gray('Thinking...')).start();
-
+        
         try {
           const response = await ai.chat(session.getMessages());
           spinner.stop();
           
-          // Display response with color
-          console.log(chalk.cyan('\n🤖:'), response.content);
+          console.log(chalk.cyan('\n🤖:'));
+          console.log(response.content);
           
-          // Add assistant message
           session.addMessage('assistant', response.content);
-          
-          // Truncate if too long
           session.truncate(20);
           
         } catch (error: any) {
           spinner.fail(chalk.red(`Error: ${error.message}`));
         }
 
-        prompt();
+        ask();
       });
     };
 
-    prompt();
+    ask();
+    
   } catch (error: any) {
-    console.error(chalk.red(`\n❌ Failed to start chat: ${error.message}`));
+    console.error(chalk.red(`\n❌ Failed to start: ${error.message}`));
     process.exit(1);
   }
-}
-
-/**
- * Execute a single prompt
- */
-async function executePrompt(prompt: string, stream?: boolean, model?: string) {
-  const spinner = ora('Executing...').start();
-  
-  try {
-    const config = await ConfigManager.load();
-    if (model) config.model = model;
-    
-    const ai = new AIEngine(config);
-    const session = new SessionManager();
-    
-    // Register tools
-    const shellTool = new ShellTool();
-    const fileTool = new FileTool();
-    ai.registerTool(shellTool);
-    ai.registerTool(fileTool);
-    
-    session.addMessage('user', prompt);
-    
-    const response = await ai.chat(session.getMessages());
-    spinner.stop();
-    
-    console.log(chalk.cyan('\n🤖:'), response.content);
-    
-  } catch (error: any) {
-    spinner.fail(chalk.red(`Error: ${error.message}`));
-    process.exit(1);
-  }
-}
-
-/**
- * Initialize configuration
- */
-async function initialize(provider: string = 'siliconflow') {
-  console.log(chalk.cyan('\n🚀 Initializing Thatgfsj Code...\n'));
-  
-  const configDir = join(process.env.HOME || process.env.USERPROFILE || '', '.thatgfsj');
-  const configFile = join(configDir, 'config.json');
-  
-  if (!existsSync(configDir)) {
-    mkdirSync(configDir, { recursive: true });
-  }
-  
-  // Get default config for provider
-  const defaultConfig = {
-    model: 'Qwen/Qwen2.5-7B-Instruct',
-    apiKey: '',
-    temperature: 0.7,
-    maxTokens: 4096,
-    provider: provider,
-    baseUrl: provider === 'siliconflow' ? 'https://api.siliconflow.cn/v1' 
-               : provider === 'minimax' ? 'https://api.minimax.chat/v1'
-               : provider === 'openai' ? 'https://api.openai.com/v1'
-               : 'https://api.siliconflow.cn/v1'
-  };
-  
-  const { writeFileSync } = await import('fs');
-  writeFileSync(configFile, JSON.stringify(defaultConfig, null, 2));
-  
-  console.log(chalk.green('✅ Initialized successfully!'));
-  console.log(chalk.gray(`Config saved to: ${configFile}`));
-  console.log(chalk.gray(`\nProvider: ${provider}`));
-  console.log(chalk.gray('Please set your API key:'));
-  
-  if (provider === 'siliconflow') {
-    console.log(chalk.gray('  export SILICONFLOW_API_KEY=your_key'));
-  } else if (provider === 'minimax') {
-    console.log(chalk.gray('  export MINIMAX_API_KEY=your_key'));
-  } else if (provider === 'openai') {
-    console.log(chalk.gray('  export OPENAI_API_KEY=your_key'));
-  } else if (provider === 'anthropic') {
-    console.log(chalk.gray('  export ANTHROPIC_API_KEY=your_key'));
-  }
-  
-  console.log(chalk.gray('\nOr edit the config file directly.\n'));
-}
-
-/**
- * Show/manage configuration
- */
-async function showConfig(options: any) {
-  console.log(chalk.cyan('\n⚙️  Current Configuration\n'));
-  
-  try {
-    const config = await ConfigManager.load();
-    
-    console.log(chalk.gray(`Config file: ~/.thatgfsj/config.json`));
-    console.log(chalk.gray(`Provider: ${config.provider || 'siliconflow'}`));
-    console.log(chalk.gray(`Model: ${config.model}`));
-    console.log(chalk.gray(`Base URL: ${config.baseUrl}`));
-    console.log(chalk.gray(`API Key: ${config.apiKey ? '***' + config.apiKey.slice(-4) : 'Not set (use env var)'}`));
-    console.log(chalk.gray(`Temperature: ${config.temperature}`));
-    console.log(chalk.gray(`Max Tokens: ${config.maxTokens}\n`));
-  } catch (error: any) {
-    console.log(chalk.yellow('No config found. Run "thatgfsj init" first.\n'));
-  }
-}
-
-/**
- * List available tools
- */
-function listTools() {
-  console.log(chalk.cyan('\n📦 Available Tools:\n'));
-  console.log(chalk.gray('  shell   - Execute shell commands'));
-  console.log(chalk.gray('  file    - Read, write, list files\n'));
-}
-
-/**
- * Show available providers
- */
-function showProviders() {
-  console.log(chalk.cyan('\n🌐 Available AI Providers:\n'));
-  console.log(chalk.gray('  siliconflow  - 硅基流动 (default, free tier available)'));
-  console.log(chalk.gray('  minimax     - MiniMax M2.5'));
-  console.log(chalk.gray('  openai      - OpenAI GPT'));
-  console.log(chalk.gray('  anthropic   - Anthropic Claude\n'));
-  console.log(chalk.gray('Usage: thatgfsj init -p siliconflow\n'));
-}
-
-/**
- * Ask for user confirmation (for dangerous shell commands)
- */
-function askConfirmation(msg: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-      terminal: true
-    });
-    
-    rl.question(chalk.yellow(`\n⚠️  ${msg}\n`) + chalk.yellow('> '), (answer) => {
-      rl.close();
-      resolve(answer.toLowerCase().startsWith('y'));
-    });
-  });
 }
