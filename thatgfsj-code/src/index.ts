@@ -36,6 +36,15 @@ process.on('unhandledRejection', (reason) => {
 
 // ============== CLI Program ==============
 
+// Add init command
+program
+  .command('init')
+  .description('初始化配置/设置向导')
+  .action(async () => {
+    const { WelcomeScreen } = await import('./repl/welcome.js');
+    await WelcomeScreen.interactiveSetup();
+  });
+
 program
   .name('gfcode')
   .description('🤖 AI Coding Assistant - Like Claude Code')
@@ -46,6 +55,14 @@ program
   .option('-m, --model <model>', 'Specify model')
   .option('--no-auto', 'Disable auto-read project files')
   .action(async (prompt, options) => {
+    // Check for API key and show welcome if needed
+    const { WelcomeScreen } = await import('./repl/welcome.js');
+    const hasApiKey = checkApiKey();
+    
+    if (!hasApiKey) {
+      WelcomeScreen.show();
+    }
+    
     // Default to interactive mode if no prompt provided
     if (!prompt && !options.interactive) {
       await startInteractive();
@@ -55,6 +72,15 @@ program
       await startInteractive();
     }
   });
+
+// Helper to check API key
+function checkApiKey(): boolean {
+  return !!(process.env.SILICONFLOW_API_KEY || 
+            process.env.OPENAI_API_KEY || 
+            process.env.MINIMAX_API_KEY ||
+            process.env.ANTHROPIC_API_KEY ||
+            process.env.OLLAMA_BASE_URL);
+}
 
 // Parse
 program.parse(process.argv);
