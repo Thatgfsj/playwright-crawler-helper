@@ -1,5 +1,5 @@
 /**
- * Welcome Screen - Claude Code style
+ * Welcome Screen - Claude Code 风格
  */
 
 import chalk from 'chalk';
@@ -10,7 +10,7 @@ import { homedir } from 'os';
 
 export class WelcomeScreen {
   /**
-   * Check if API key is configured
+   * 检查是否已配置 API Key
    */
   static hasApiKey(): boolean {
     if (process.env.SILICONFLOW_API_KEY || 
@@ -35,7 +35,7 @@ export class WelcomeScreen {
   }
 
   /**
-   * Show welcome screen if no API key
+   * 如果没有 API Key 则显示欢迎页
    */
   static show(): boolean {
     if (this.hasApiKey()) {
@@ -47,63 +47,71 @@ export class WelcomeScreen {
   }
 
   /**
-   * Claude Code style welcome
+   * Claude Code 风格欢迎页
    */
   static printClaudeStyle(): void {
     console.clear();
     
-    // Banner
-    console.log(chalk.cyan('+') + chalk.white.bold(' Claude Code ') + chalk.cyan('-'.repeat(50)) + '+');
-    console.log(chalk.cyan('|') + chalk.yellow(' Tips for getting started').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' Welcome to Thatgfsj Code!').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' Run gfcode init to configure your API').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.green(' Available providers:').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray('  - SiliconFlow (recommended) - Qwen, Kimi, DeepSeek').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray('  - MiniMax - Moonshot Kimi').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray('  - OpenAI - GPT-4o').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray('  - Anthropic - Claude').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.cyan(' Quick commands:').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray('   gfcode init        - Setup').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray('   gfcode "question"  - Ask').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray('   gfcode            - Interactive').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
+    const w = 62;
     
-    const model = process.env.MODEL || 'Not configured';
-    const cwd = process.cwd().length > 40 ? '...' + process.cwd().slice(-37) : process.cwd();
-    console.log(chalk.cyan('|') + chalk.gray(' Model: ' + model).padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' Dir: ' + cwd).padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('+') + '-'.repeat(62) + '+');
+    // 标题
+    console.log(chalk.cyan('+') + chalk.white.bold(' Claude Code ') + chalk.cyan('-'.repeat(w - 14)) + '+');
+    console.log(chalk.cyan('|') + chalk.yellow(' 快速开始指南').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 欢迎使用 Thatgfsj Code!').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 运行 gfcode init 配置你的 API Key').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    
+    // 提供商
+    console.log(chalk.cyan('|') + chalk.green(' 可用提供商:').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray('  - SiliconFlow (推荐) - Qwen, Kimi, DeepSeek').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray('  - MiniMax - Moonshot Kimi 系列').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray('  - OpenAI - GPT-4o, GPT-4o-mini').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray('  - Anthropic - Claude 3.5 Sonnet').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    
+    // 快捷命令
+    console.log(chalk.cyan('|') + chalk.cyan(' 快捷命令:').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray('   gfcode init        - 配置 API Key').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray('   gfcode "问题"     - 提问').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray('   gfcode            - 交互模式').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    
+    // 当前状态
+    const model = process.env.MODEL || '未配置';
+    const cwd = process.cwd().length > 38 ? '...' + process.cwd().slice(-35) : process.cwd();
+    console.log(chalk.cyan('|') + chalk.gray(' 当前模型: ' + model).padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 工作目录: ' + cwd).padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('+') + '-'.repeat(w) + '+');
     console.log();
-    console.log(chalk.gray(' Type "help" for shortcuts'));
+    console.log(chalk.gray(' 输入 "help" 查看快捷命令'));
     console.log();
   }
 
   /**
-   * Interactive setup wizard
+   * 交互式配置向导
    */
   static async interactiveSetup(): Promise<void> {
     console.clear();
     
-    console.log(chalk.cyan('+') + chalk.white.bold(' Thatgfsj Code Setup ') + chalk.cyan('-'.repeat(38)) + '+');
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
+    const w = 62;
+    console.log(chalk.cyan('+') + chalk.white.bold(' Thatgfsj Code 配置向导 ') + chalk.cyan('-'.repeat(w - 22)) + '+');
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
     
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
     });
 
-    console.log(chalk.cyan('|') + chalk.white(' Select provider:').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.green(' 1. SiliconFlow (recommended)').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' 2. MiniMax').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' 3. OpenAI').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' 4. Anthropic').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.white(' 请选择 AI 提供商:').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.green(' 1. SiliconFlow (推荐)').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 2. MiniMax').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 3. OpenAI').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 4. Anthropic').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
 
-    const choice = await this.question(rl, chalk.green(' Enter (1-4): '));
+    const choice = await this.question(rl, chalk.green(' 请选择 (1-4): '));
     
     const providers: Record<string, { name: string; model: string; url: string }> = {
       '1': { name: 'siliconflow', model: 'Qwen/Qwen2.5-7B-Instruct', url: 'https://siliconflow.cn' },
@@ -114,14 +122,15 @@ export class WelcomeScreen {
 
     const selected = providers[choice] || providers['1'];
     
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.gray(' Get key from: ' + selected.url).padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 请访问: ' + selected.url).padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.gray(' 注册账号并获取 API Key').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
 
-    const apiKey = await this.question(rl, chalk.green(' Enter API Key: '));
+    const apiKey = await this.question(rl, chalk.green(' 请输入 API Key: '));
     
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.yellow(' Saving...').padEnd(62) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.yellow(' 正在保存配置...').padEnd(w) + chalk.cyan('|'));
 
     const config = {
       model: selected.model,
@@ -140,9 +149,9 @@ export class WelcomeScreen {
 
     writeFileSync(configPath, JSON.stringify(config, null, 2));
 
-    console.log(chalk.cyan('|') + ' '.repeat(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('|') + chalk.green(' OK! Run gfcode to start').padEnd(62) + chalk.cyan('|'));
-    console.log(chalk.cyan('+') + '-'.repeat(62) + '+');
+    console.log(chalk.cyan('|') + ' '.repeat(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('|') + chalk.green(' ✓ 配置已保存! 运行 gfcode 开始使用').padEnd(w) + chalk.cyan('|'));
+    console.log(chalk.cyan('+') + '-'.repeat(w) + '+');
     console.log();
     
     rl.close();
