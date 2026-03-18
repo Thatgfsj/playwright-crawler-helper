@@ -5,6 +5,14 @@
  * Claude Code-like interactive CLI
  */
 
+// 强制 UTF-8 编码 (Windows) - 必须在任何输出之前
+if (process.platform === 'win32') {
+  try {
+    // 执行 chcp 65001 设置代码页
+    require('child_process').execSync('chcp 65001', { stdio: 'ignore', windowsHide: true });
+  } catch {}
+}
+
 import { program } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
