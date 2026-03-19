@@ -1,67 +1,34 @@
-# 🕷️ AI Crawler
+# Playwright Crawler Helper 🕷️
 
-极简爬虫框架，专为 AI 代理设计。单文件、无状态、纯内存。
+> 这是一个 OpenClaw/Codex 技能包，用于 Playwright 爬虫辅助
 
-> ⚠️ 仅供学习研究，遵守 robots.txt
+## 什么是技能？
 
-## 🚀 3 行跑通
+这是一个 OpenClaw 技能，包含：
 
-```python
-from ai_crawler import fetch
-result = fetch("https://example.com")
-print(result["data"]["title"])
-```
-
-## 📖 接口
-
-| 函数 | 用途 |
-|------|------|
-| `fetch(url, sel)` | 单页爬取 |
-| `crawl(urls, sel, limit)` | 批量爬取 |
-| `links(url)` | 获取链接 |
-| `json_api(url)` | JSON API |
-| `stream(urls, sel)` | 流式返回 |
-
-## 示例
-
-```python
-# 带选择器
-result = fetch("https://example.com", "h2")
-# {"ok": true, "data": [{"text": "..."}]}
-
-# 批量
-result = crawl(["https://a.com", "https://b.com"], "article")
-
-# 链接
-result = links("https://example.com")
-
-# JSON
-result = json_api("https://api.github.com/users/octocat")
-
-# 流式
-for item in stream(["https://a.com"], "p"):
-    print(item)
-```
-
-## 返回格式
-
-```python
-{"ok": True, "data": ..., "error": "", "code": "OK", "meta": {...}}
-{"ok": False, "data": None, "error": "...", "code": "TIMEOUT", "meta": {}}
-```
-
-## 错误码
-
-- `OK` - 成功
-- `TIMEOUT` - 超时
-- `NETWORK` - 网络错误
-- `BLOCKED` - 被拦截
-- `BAD_URL` - 无效URL
-- `TOO_BIG` - 内容过大
-- `PARSE` - 解析失败
+- **SKILL.md** - 技能定义和使用说明
+- **skill.json** - 元数据
+- **ai_crawler.py** - 核心爬虫代码
+- **requirements.txt** - Python 依赖
 
 ## 安装
 
-```bash
-pip install requests beautifulsoup4
-```
+`ash
+# 克隆仓库
+git clone https://github.com/Thatgfsj/playwright-crawler-helper.git
+cd playwright-crawler-helper
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 安装 Playwright 浏览器
+playwright install chromium
+`
+
+## 作为技能使用
+
+将项目添加到 OpenClaw 的 skills 目录即可使用。
+
+## API 参考
+
+详见 [SKILL.md](SKILL.md)
