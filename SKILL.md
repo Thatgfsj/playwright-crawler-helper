@@ -1,36 +1,48 @@
 # Playwright Crawler Helper
 
-使用 Playwright 浏览器自动化进行网页爬取。用于需要渲染 JavaScript 的动态页面或需要分析网络请求的场景。
+基于 Playwright 真实浏览器引擎的爬虫工具。用于需要 JavaScript 渲染的动态页面、网络请求分析、或需要绕过反爬检测的场景。
 
 ## 快速开始
 
-`python
-from crawler import load_config, create_browser
+```python
+from ai_crawler import fetch
 
-# 加载配置
-load_config("config.yaml")
+# 浏览器渲染获取页面
+result = fetch("https://www.example.com")
+print(result["data"]["title"])
+print(result["data"]["text"][:500])
 
-# 创建浏览器
-with create_browser(headless=False) as browser:
-    browser.goto("https://example.com")
-    browser.wait_for_selector("#content")
-    browser.screenshot("screenshot.png")
-    
-    # 获取 XHR 请求
-    requests = browser.get_xhr_requests()
-    print(requests)
-`
+# 使用 CSS 选择器提取元素
+result = fetch("https://news.ycombinator.com", sel=".athing .titleline a")
+for item in result["data"]:
+    print(item["text"])
+```
 
-## 配置项 (config.yaml)
+## 核心 API
 
-- **browser**: 浏览器配置
-  - headless: 是否无头模式 (默认 false)
-  - iewport: 窗口尺寸
-- **request**: 请求配置
-  - 	imeout: 超时时间
-  - nticrawler: 反爬虫配置
-- **antiCrawler**: 反爬配置
-- **logging**: 日志级别
-- **output**: 输出目录
-- **queue**: 队列配置
-- **checkpoint**: 检查点配置
+| 函数 | 用途 | 使用浏览器 |
+|------|------|:----------:|
+| `fetch(url, sel, ...)` | 获取页面内容（JS 渲染） | ✅ |
+| `crawl(urls, sel, ...)` | 批量爬取，自动去重 | ✅ |
+| `links(url, sel, ...)` | 提取页面链接 | ✅ |
+| `screenshot(url, ...)` | 页面截图（Base64 / 文件） | ✅ |
+| `intercept(url, patterns, ...)` | 拦截 XHR/Fetch 网络请求 | ✅ |
+| `stream(urls, sel, ...)` | 流式爬取（逐个 yield） | ✅ |
+| `json_api(url)` | 获取 JSON API | ❌（requests） |
+
+## 常用参数
+
+- `headless=True` — 无头模式；遇到强反爬设 `False`
+- `stealth=True` — 注入反检测脚本（隐藏 webdriver）
+- `wait_until="domcontentloaded"` — 可选 `load` / `networkidle`
+- `screenshot=False` — 设为 `True` 返回页面截图 Base64
+- `capture_network=False` — 设为 `True` 或传入关键词列表捕获 API 请求
+- `scroll=False` — 设为 `True` 自动滚到底部触发懒加载
+
+## 使用场景
+
+1. **动态页面爬取** — React / Vue / SPA 页面
+2. **API 分析** — 通过 `intercept()` 捕获页面的 XHR/Fetch 请求
+3. **反爬对抗** — 隐藏 webdriver、Chrome 启动参数、有头模式
+4. **页面截图** — Canvas / WebGL 内容的截图
+5. **批量采集** — `crawl()` 和 `stream()` 支持去重大规模爬取
